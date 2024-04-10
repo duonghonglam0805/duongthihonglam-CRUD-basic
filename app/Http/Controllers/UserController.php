@@ -2,211 +2,257 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Phone;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
 class UserController extends Controller
 {
+    
     /**
      * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
      */
     /**
- * @OA\Get(
- *   path="/api/users",
- *   summary="Get all users",
- *   description="Get all users without specifying an ID",
- *   tags={"User"},
- *   @OA\Response(
- *       response=200,
- *       description="OK",
- *       @OA\JsonContent(
- *           type="array",
- *           @OA\Items(
- *               type="object",
- *               @OA\Property(property="id", type="integer"),
- *               @OA\Property(property="name", type="string"),
- *               @OA\Property(property="email", type="string"),
- *               @OA\Property(property="password", type="string")
- *           )
- *       )
- *   )
- *)
- *
- * @OA\Post(
- *     path="/api/users",
- *     summary="Create a new users",
- *     description="Create a new users with the provided name, email and password",
- *     tags={"User"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"name", "email", "password"},
- *             @OA\Property(property="name", type="string", example="New User Name"),
- *             @OA\Property(property="email", type="string", example="user.1@gmail.com"),
- *             @OA\Property(property="password", type="string", example="user123")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="User created successfully",
- *         @OA\MediaType(
- *             mediaType="application/json"
- *         )
- *     )
- * )
- * 
- * @OA\Get(
- *     path="/api/users/{id}",
- *     summary="Get user by ID",
- *     description="Get a user by its ID",
- *     tags={"User"},
- *     @OA\Parameter(
- *         name="id",
- *         in="path",
- *         description="ID of the user to retrieve",
- *         required=true,
- *         @OA\Schema(
- *             type="integer"
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="OK",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="id", type="integer"),
- *             @OA\Property(property="name", type="string"),
- *             @OA\Property(property="email", type="string"),
- *             @OA\Property(property="password", type="string")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="User not found"
- *     )
- * )
- * 
- * @OA\PUT(
- *     path="/api/users/{id}",
- *     summary="Update user",
- *     description="Update an existing user",
- *     tags={"User"},
- *     @OA\Parameter(
- *         name="id",
- *         in="path",
- *         description="ID of the user to update",
- *         required=true,
- *         @OA\Schema(
- *             type="integer"
- *         )
- *     ),
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"name", "email", "password"},
- *             @OA\Property(property="name", type="string", example="Updated User Name"),
- *             @OA\Property(property="email", type="string", example="updated.user@gmail.com"),
- *             @OA\Property(property="password", type="string", example="updated123")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="User updated successfully"
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="User not found"
- *     )
- * )
- * 
- * @OA\Delete(
- *     path="/api/users/{id}",
- *     summary="Delete user",
- *     description="Delete an existing user",
- *     tags={"User"},
- *     @OA\Parameter(
- *         name="id",
- *         in="path",
- *         description="ID of the user to delete",
- *         required=true,
- *         @OA\Schema(
- *             type="integer"
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="User deleted successfully"
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="User not found"
- *     )
- * )
- */
+     * @OA\Get(
+     *     path="/api/users",
+     *     summary="Get all users",
+     *     tags={"Users"},
+     *      @OA\Response(response=200, description="All Users" ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *     security={{"bearerAuth":{}}}
+     * )
+     */
     public function index()
     {
-        $users = User::all();
-        return response()->json($users,200);
+        $users = User::with('phone')->get();
+        return $users;
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
+    
     /**
      * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
+    /**
+    * @OA\Post(
+        *     path="/api/users",
+        *     summary="Create a new user",
+        *     description="Create a new user with the provided username, email, and password",
+        *     tags={"Users"},
+        *     @OA\RequestBody(
+        *         required=true,
+        *         @OA\JsonContent(
+        *             required={"name", "email", "password"},
+        *             @OA\Property(property="name", type="string", example="honglam"),
+        *             @OA\Property(property="email", type="string", format="email", example="example@gmail.com"),
+        *             @OA\Property(property="number", type="string", example="0987654321"),
+        *             @OA\Property(property="password", type="string", example="password123")
+        *         )
+        *     ),
+        *    @OA\Response(response=200, description="Create New User" ),
+       *     @OA\Response(response=400, description="Bad request"),
+       *      @OA\Response(response=404, description="Resource Not Found"),
+        * )
+        */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'string|required|min:3|max:15',
-            'email' => 'string|required|email|unique:users',
-            'password' => 'string|required|confirmed'
-            ]);
-        $user = User::create($request->all());
-        return response()->json($user, 201);
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'email' => 'required|string|email|unique:users,email',
+            'password' => 'required|string',
+        ], [
+            'name.required' => 'Bắt buộc',
+            'name.string' => 'Bắt buộc là chuỗi',
+            'email.required' => 'Email bắt buộc phải nhập',
+            'email.email' => 'Email không đúng định dạng',
+            'email.unique' => 'Email đã tồn tại trên hệ thống',
+            'email.string' => 'Email bắt buộc là string',
+            'password.required' => 'Password bắt buộc phải nhập',
+            'password.string' => 'Password bắt buộc là string',
+        ]);
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            return response()->json($errors, 412);
+        } else{
+            $user = new User();
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->password = $request->password;
+            $user->save();
+            if($request->has('number')){
+                $phone = new Phone();
+                $phone->number = $request->number;
+                $phone->user_id = $user->id;
+                $phone->save();
+            }
+            $userData = $user->toArray();
+            $userData['phone'] = isset($phone) ? $phone->toArray() : null;
+            return response()->json([
+                'message' => 'Người dùng đã được tạo thành công',
+                'data'=>$userData
+            ],201);
+        }
+        
     }
 
     /**
      * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function show(string $id)
-    {
-        $user = User::findOrFail($id);
-        return response()->json($user);
-    }
     /**
-     * Show the form for editing the specified resource.
+     * @OA\Get(
+     *     path="/api/users/{id}",
+     *     summary="Get a specific user",
+     *     tags={"Users"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the user to retrieve",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="User Detail" ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *     security={{"bearerAuth":{}}}
+     * )
      */
-    public function edit(string $id)
+    public function show(Request $id)
     {
-        //
+        $user=User::with('phone')->find($id);
+        if(!$user){
+            return response()->json([
+                'message'=>'Người dùng không tồn tại',
+            ],404);
+        }
+        return $user;
     }
 
     /**
      * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, string $id)
+     /**
+     * @OA\Put(
+     *     path="/api/users/{id}",
+     *     summary="Update a specific user",
+     *     tags={"Users"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="User ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                  @OA\Property(property="name", type="string", example="john_doe"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
+     *             @OA\Property(property="password", type="string", example="password123")
+     *             )
+     *         )
+     *     ),
+     *      @OA\Response(response=200, description="Update user" ),
+    *      @OA\Response(response=400, description="Bad request"),
+    *      @OA\Response(response=404, description="Resource Not Found"),
+    *     security={{"bearerAuth":{}}}
+    * )
+    */
+    public function update(Request $request, $userId)
     {
-        $request->validate([
-            'name' => 'string|required|min:3|max:15',
-            'email' => 'string|required|email|unique:users',
-            'password' => 'string|required'
+        $validator = Validator::make($request->all(), [
+            'name' => 'string|min:3|max:15',
+            'email' => 'string|email|unique:users,email',
+        ], [
+            'name.string' => 'Họ và tên bắt buộc là string',
+            'name.min' => 'Họ và tên phải từ :min ký tự trở lên',
+            'name.max' => 'Họ và tên phải nhỏ hơn :max ký tự',
+            'email.email' => 'Email không đúng định dạng',
+            'email.unique' => 'Email đã tồn tại trên hệ thống',
+            'email.string' => 'Email bắt buộc là string',
+        ]);
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+            return response()->json($errors, 412);
+        } else{
+            // Tìm người dùng dựa trên id
+            $user = User::with('phone')->find($userId);
+
+            if (!$user) {
+                return response()->json(['message' => 'Không tìm thấy người dùng'], 404);
+            }
+            
+            if ($request->has('name')) {
+                $user->name = $request->name;
+            }
+            if ($request->has('email')) {
+                $user->email = $request->email;
+            }
+            if ($request->has('password')) {
+                $user->password = bcrypt($request->password);
+            }
+            if ($request->has('number')) {
+                $phone = $user->phone;
+                if (!$phone) {
+                    $phone = new Phone();
+                    $phone->user_id = $user->id;
+                }
+                // Cập nhật thông tin số điện thoại
+                $phone->number = $request->number;
+                $phone->save();
+            }
+
+            $user->save();
+            $userData = $user->toArray();
+            $userData['phone'] = isset($phone) ? $phone->toArray() : null;
+            return response()->json([
+                'message' => 'Thông tin của người dùng đã được cập nhật thành công',
+                'data'=>$userData
             ]);
-        $user = User::findOrFail($id);
-        $user->update($request->all());
-        return response()->json($user);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function destroy(string $id)
+     /**
+     * @OA\Delete(
+     *     path="/api/users/{id}",
+     *     summary="Delete a specific user",
+     *     tags={"Users"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="User ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Delate user" ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *     security={{"bearerAuth":{}}}
+     * )
+     */
+    public function destroy(User $user)
     {
-        User::findOrFail($id)->delete();
-        return response()->json(null, 204);
+        $user->delete();
+        return "Delete user success";
     }
 }
