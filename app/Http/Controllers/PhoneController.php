@@ -62,6 +62,7 @@ class PhoneController extends Controller
         }
         return response()->json($phone, 200);
     }
+
     
     /**
      * Update the specified resource in storage.

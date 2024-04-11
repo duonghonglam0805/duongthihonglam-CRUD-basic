@@ -44,45 +44,34 @@
         "/api/posts": {
             "get": {
                 "tags": [
-                    "Post"
+                    "Posts"
                 ],
                 "summary": "Get all posts",
-                "description": "Get all posts without specifying an ID",
-                "operationId": "e9eaf7df702a94f4443677bd1a36cfe6",
+                "operationId": "856fee4e115dc88f54fdbc502925ad26",
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer"
-                                            },
-                                            "title": {
-                                                "type": "string"
-                                            },
-                                            "description": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "type": "object"
-                                    }
-                                }
-                            }
-                        }
+                        "description": "All Post"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
-                    "Post"
+                    "Posts"
                 ],
                 "summary": "Create a new post",
                 "description": "Create a new post with the provided title and description",
-                "operationId": "affe42bc16a09d91cea68d4f0e28189c",
+                "operationId": "4a657e51a0066c64781851f2fd2651e2",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -90,8 +79,103 @@
                             "schema": {
                                 "required": [
                                     "title",
-                                    "description"
+                                    "description",
+                                    "user_id"
                                 ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "New Post Title"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "This is a new post description"
+                                    },
+                                    "user_id": {
+                                        "type": "string",
+                                        "example": "This is a new post description"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Create New Post"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/posts/{id}": {
+            "get": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get a specific post",
+                "operationId": "b0f9d92879218f68a376b6edc6467c67",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Show Post Detail"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Update a specific post",
+                "operationId": "929614537d76a081a92170a41ed3bdb3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Post ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
                                 "properties": {
                                     "title": {
                                         "type": "string",
@@ -109,123 +193,32 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {}
-                        }
-                    }
-                }
-            }
-        },
-        "/api/posts/{id}": {
-            "get": {
-                "tags": [
-                    "Post"
-                ],
-                "summary": "Get post by ID",
-                "description": "Get a post by its ID",
-                "operationId": "05d79d8dc5f27fe133a12d0f965cfd7c",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID of the post to retrieve",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer"
-                                        },
-                                        "title": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Update Post"
+                    },
+                    "400": {
+                        "description": "Bad request"
                     },
                     "404": {
-                        "description": "Post not found"
-                    }
-                }
-            },
-            "put": {
-                "tags": [
-                    "Post"
-                ],
-                "summary": "Update post",
-                "description": "Update an existing post",
-                "operationId": "b39be0535c78e16b8fad4f22ff60a02e",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID of the post to update",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "title",
-                                    "description"
-                                ],
-                                "properties": {
-                                    "title": {
-                                        "type": "string",
-                                        "example": "Updated Post Title"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "This is an updated post description"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
+                        "description": "Resource Not Found"
                     }
                 },
-                "responses": {
-                    "200": {
-                        "description": "Post updated successfully"
-                    },
-                    "404": {
-                        "description": "Post not found"
+                "security": [
+                    {
+                        "bearerAuth": []
                     }
-                }
+                ]
             },
             "delete": {
                 "tags": [
-                    "Post"
+                    "Posts"
                 ],
-                "summary": "Delete post",
-                "description": "Delete an existing post",
-                "operationId": "b31f6e4284f5d48b27eb48ce5a216539",
+                "summary": "Delete a specific post",
+                "operationId": "fad1726bd24cd459fc1525b67985df39",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID of the post to delete",
+                        "description": "Post ID",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -234,12 +227,20 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Post deleted successfully"
+                        "description": "Delete Post"
+                    },
+                    "400": {
+                        "description": "Bad request"
                     },
                     "404": {
-                        "description": "Post not found"
+                        "description": "Resource Not Found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/users": {

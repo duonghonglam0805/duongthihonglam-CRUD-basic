@@ -1,18 +1,15 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
     /**
      * @OA\Get(
@@ -25,17 +22,26 @@ class PostController extends Controller
      *     security={{"bearerAuth":{}}}
      * )
      */
+    public function __construct()
+    {
+        $this->posts = new Post;
+    }
+    private $posts;
     public function index()
     {
-        return Post::all();
+        $posts = Post::all();
+        return response()->json($posts);
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Show the form for creating a new resource.
      */
+    public function create()
+    {
+        //
+    }
+
+
     /**
      * @OA\Post(
      *     path="/api/posts",
@@ -45,81 +51,108 @@ class PostController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"title", "description"},
+     *             required={"title", "description", "user_id"},
      *             @OA\Property(property="title", type="string", example="New Post Title"),
-     *             @OA\Property(property="description", type="string", example="This is a new post description")
+     *             @OA\Property(property="description", type="string", example="This is a new post description"),
+     *              @OA\Property(property="user_id", type="string", example="This is a new post description")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\MediaType(
-     *             mediaType="application/json"
-     *         )
+     *      security={{"bearerAuth":{}}},
+     *      @OA\Response(response=200, description="Create New Post" ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
      *     )
      * )
      */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'required|unique:posts|max:100|min:5',
-            'description' => 'required|max:50|min:10',
+            'title' => 'required|unique:posts|min:5|max:100',
+            'description' => 'required|min:5|max:50',
         ], [
-            'title.required' => 'Title bắt buộc phải nhập',
-            'title.min' => 'Title phải từ :min ký tự trở lên',
-            'title.max' => 'Title phải từ :max ký tự trở lên',
-            'title.unique' => 'Title đã tồn tại trên hệ thống',
-            'description.required' => 'Description bắt buộc phải nhập',
-            'description.min' => 'Description phải từ :min ký tự trở lên',
-            'description.max' => 'Description phải từ :max ký tự trở lên',
+            'title.required' => 'Post title is required.',
+            'title.min' => 'Post title must be at least :min characters.',
+            'title.unique' => 'Post title has already been taken.',
+            'title.max' => 'Post title must be at most :max characters.',
+            'description.required' => 'Post description is required.',
+            'description.min' => 'Post description must be at least :min characters.',
+            'description.max' => 'Post description must be at most :max characters.',
         ]);
+
         if ($validator->fails()) {
             $errors = $validator->errors()->all();
             return response()->json($errors, 412);
         }
-        return Post::create($request->all());
+
+        $data = [
+            'title' => $request->input('title'),
+            'description' => $request->input('description'),
+            'user_id' => $request->input('user_id')
+        ];
+
+        $post = Post::create($data);
+        if ($post) {
+            return response()->json(['message' => 'create succes'], 200);
+        } else {
+
+            return response()->json(['message' => 'error'], 400);
+        }
     }
+
 
     /**
      * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     /**
      * @OA\Get(
      *     path="/api/posts/{id}",
-     *     summary="Get one posts",
+     *     summary="Get a specific post",
      *     tags={"Posts"},
-     *          @OA\Parameter(
-     *              name="id",
-     *               in="path",
-     *              description="Post ID",
-     *              required=true,
-     *              @OA\Schema(type="integer")
-     *          ),
-     *     @OA\Response(response=200, description="One Post"),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Post ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(response=200, description="Show Post Detail"),
+     *     @OA\Response(response=400, description="Bad request"),
+     *     @OA\Response(response=404, description="Resource Not Found"),
      *     security={{"bearerAuth":{}}}
      * )
      */
-    public function show(Post $post)
+    public function show(Request $request, string $id)
+        {
+            try {
+                $post = Post::with('user')->find($id);
+                return response()->json([
+                    'post' => [
+                        'id' => $post->id,
+                        'title' => $post->title,
+                        'description' => $post->description,
+                        'created_by' => $post->user->name
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Post not found'], 404);
+            }
+        }
+
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Post $post)
     {
-        return $post;
     }
 
     /**
      * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     /**
      * @OA\Put(
      *     path="/api/posts/{id}",
-     *     summary="Update post",
+     *     summary="Update a specific post",
      *     tags={"Posts"},
      *     @OA\Parameter(
      *         name="id",
@@ -134,7 +167,7 @@ class PostController extends Controller
      *             mediaType="application/json",
      *             @OA\Schema(
      *                 type="object",
-     *                 @OA\Property(property="name", type="string", example="New Post Title"),
+     *                 @OA\Property(property="title", type="string", example="New Post Title"),
      *                 @OA\Property(property="description", type="string", example="This is a new post description")
      *             )
      *         )
@@ -145,33 +178,49 @@ class PostController extends Controller
      *     security={{"bearerAuth":{}}}
      * )
      */
-    public function update(Request $request, Post $post)
+    public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'required|unique:posts|max:100|min:5',
-            'description' => 'required|max:50|min:10',
+            'title' => 'required|unique:posts|min:5|max:100',
+            'description' => 'required|min:5|max:50',
         ], [
-            'title.required' => 'Title bắt buộc phải nhập',
-            'title.min' => 'Title phải từ :min ký tự trở lên',
-            'title.max' => 'Title phải từ :max ký tự trở lên',
-            'title.unique' => 'Title đã tồn tại trên hệ thống',
-            'description.required' => 'Description bắt buộc phải nhập',
-            'description.min' => 'Description phải từ :min ký tự trở lên',
-            'description.max' => 'Description phải từ :max ký tự trở lên',
+            'title.required' => 'Post title is required.',
+            'title.min' => 'Post title must be at least :min characters.',
+            'title.unique' => 'Post title has already been taken.',
+            'title.max' => 'Post title must be at most :max characters.',
+            'description.required' => 'Post description is required.',
+            'description.min' => 'Post description must be at least :min characters.',
+            'description.max' => 'Post description must be at most :max characters.',
         ]);
+
         if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            return response()->json($errors, 412);
+            return response()->json($validator->errors(), 422);
         }
-        $post->update($request->all());
-        return $post;
+
+        $post = Post::find($id);
+
+        if (!$post) {
+            return response()->json(['error' => 'Post not found'], 404);
+        }
+
+        $dataUpdate = [
+            'title' => $request->input('title'),
+            'description' => $request->input('description'),
+        ];
+
+        $post->update($dataUpdate);
+        if (!$post) {
+            return response()->json(['error' => 'Failed to update post'], 500);
+        }
+
+        return response()->json(['message' => 'Post updated successfully'], 200);
     }
+
+
+
 
     /**
      * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     /**
      * @OA\Delete(
@@ -184,16 +233,20 @@ class PostController extends Controller
      *         description="Post ID",
      *         required=true,
      *         @OA\Schema(type="integer")
-     *     ),    
+     *     ),
      *     @OA\Response(response=200, description="Delete Post"),
      *     @OA\Response(response=400, description="Bad request"),
      *     @OA\Response(response=404, description="Resource Not Found"),
      *     security={{"bearerAuth":{}}}
      * )
      */
-    public function destroy(Post $post)
+    public function destroy(string $id)
     {
-        $post->delete();
-        return "Delete success";
+        $post = Post::find($id);
+        if (!$post) {
+            return response()->json(['error' => 'Post not found'], 404);
+        }
+        $post->user()->delete();
+        return response()->json(['message' => 'Post deleted successfully'], 200);
     }
 }
